@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('aws-cred')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-passwd')
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Bharathsv89/project-Terraform.git' # Replace with your GitHub repo URL
+            }
+        }
+		
+        stage('Install Terraform') {
+            steps {
+                sh '''
+                    # Install Terraform
+                    wget https://releases.hashicorp.com/terraform/1.10.5/terraform_1.10.5_linux_amd64.zip
+                    unzip terraform_1.10.5_linux_amd64.zip
+                    sudo mv terraform /usr/local/bin/
+                    terraform --version
+                '''
+            }
+        }
+		
+        stage('Terraform Apply') {
+            steps {
+                dir('terraform') {
+                    sh 'terraform init'
+                    sh 'terraform apply -auto-approve'
+                    script {
+                        def publicIp = sh(script: 'terraform output public_ip', returnStdout: true).trim()
+                        echo "EC2 Instance Public IP: ${publicIp}"
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t tomcat-app .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh 'docker run -d -p 8080:8080 --name tomcat-container tomcat-app'
+            }
+        }
+    }
+
+    post {
+        always {
+            dir('terraform') {
+                sh 'terraform destroy -auto-approve'
+            }
+        }
+    }
+}
+
