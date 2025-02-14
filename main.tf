@@ -29,7 +29,7 @@ resource "aws_instance" "example" {
 
     connection {
       type        = "ssh"
-      user        = "ec2-user"
+      user        = "root"
       private_key = file("vm-key") # Replace with your private key path
       host        = self.public_ip
     }
