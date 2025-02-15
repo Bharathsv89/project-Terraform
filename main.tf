@@ -28,7 +28,7 @@ terraform {
 }
 
 # Create an EC2 instance
-resource "aws_instance" "example" {
+resource "aws_instance" "Terraform-EC2" {
   ami           = "ami-053a45fff0a704a47" # Replace with your desired AMI
   instance_type = "t2.medium"
 
